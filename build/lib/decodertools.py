@@ -2,6 +2,7 @@ import numpy as np
 import stim 
 import pymatching 
 import sinter 
+import math
 
 from scipy.optimize import curve_fit
 from CircuitGeneratorParams import *

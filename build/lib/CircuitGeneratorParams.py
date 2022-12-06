@@ -1,5 +1,6 @@
 from typing import Callable, Set, List, Dict, Tuple, Optional
-import stim
+import math
+import stim 
 from dataclasses import dataclass
 
 def append_anti_basis_error(circuit: stim.Circuit, targets: List[int], p: float, basis: str) -> None:
