@@ -1,0 +1,11 @@
+README.md
+setup.py
+src/CircuitGeneratorParams.py
+src/__init__.py
+src/decodertools.py
+src/generate_circuit.py
+src/subsystem_surface_code_demo.egg-info/PKG-INFO
+src/subsystem_surface_code_demo.egg-info/SOURCES.txt
+src/subsystem_surface_code_demo.egg-info/dependency_links.txt
+src/subsystem_surface_code_demo.egg-info/requires.txt
+src/subsystem_surface_code_demo.egg-info/top_level.txt

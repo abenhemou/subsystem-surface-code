@@ -1,0 +1,9 @@
+Metadata-Version: 2.1
+Name: subsystem-surface-code-demo
+Version: 0.1.0
+Summary: A basic demo to simulate the subsystem surface code
+Author: Asmae Benhemou
+Author-email: asmabenh@amazon.com
+
+# subsystem-surface-code
+Subsystem surface code demo.
