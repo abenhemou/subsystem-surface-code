@@ -4,7 +4,7 @@ This file contains a function to generate the rotated subsystem surface code for
 
 from typing import Set, List, Dict
 from dataclasses import dataclass
-from CircuitGeneratorParams import *
+from .CircuitGeneratorParams import *
 
 @dataclass
 class SubsystemSurfaceCode:
@@ -43,17 +43,17 @@ class SubsystemSurfaceCode:
 
     @property 
     def data_coords(self) -> List[complex]:
-        data_coords, x_ancilla_coords, z_ancilla_coords, x_observable, z_observable = self.get_subsystem_surface_code_coordinates(self.distance)
+        data_coords, _, _, _, _ = self.get_subsystem_surface_code_coordinates(self.distance)
         return data_coords
     
     @property 
     def x_ancilla_coords(self) -> List[complex]:
-        data_coords, x_ancilla_coords, z_ancilla_coords, x_observable, z_observable = self.get_subsystem_surface_code_coordinates(self.distance)
+        _, x_ancilla_coords, _, _, _ = self.get_subsystem_surface_code_coordinates(self.distance)
         return x_ancilla_coords
         
     @property 
     def z_ancilla_coords(self) -> List[complex]:
-        data_coords, x_ancilla_coords, z_ancilla_coords, x_observable, z_observable = self.get_subsystem_surface_code_coordinates(self.distance)
+        _, _, z_ancilla_coords, _, _ = self.get_subsystem_surface_code_coordinates(self.distance)
         return z_ancilla_coords
     
     @dataclass 
@@ -104,7 +104,7 @@ class SubsystemSurfaceCode:
     
     @property
     def m2shape(self):
-        
+        """Returns the type of check, ie. stabilizer or gauge."""
         m2shape: Dict[complex, str] = {}
         for m in list(self.x_ancilla_coords)+list(self.z_ancilla_coords):
             if m.real in [0, 2*self.distance] or m.imag in [0, 2*self.distance]:
@@ -168,8 +168,8 @@ def generate_rotated_subsystem_surface_code(params: CircuitGenParameters, codepa
     chosen_basis_observable = x_observable if experiment_basis == "X" else z_observable 
 
     
-    # List out CNOT gate targets in the bulk 
-    #---------------------------------------
+    # List out CNOT targets in the bulk 
+    #----------------------------------
 
     cnot_targets: List[List[int]] = [[], [], [], []]
     
@@ -197,8 +197,8 @@ def generate_rotated_subsystem_surface_code(params: CircuitGenParameters, codepa
                     cnot_targets[k].append(p2q[data])
                     cnot_targets[k].append(p2q[measure])   
 
-    # List out CNOT gate targets at start 
-    #------------------------------------
+    # List out CNOT targets at start 
+    #-------------------------------
     start_cnot_targets: List[List[int]] = [[], [], [], []]
     
     for k in range(2):
@@ -298,7 +298,6 @@ def generate_rotated_subsystem_surface_code(params: CircuitGenParameters, codepa
             head.append_operation("TICK", [])
 
     # First detectors in experiment basis
-    # boundary (stabilizer detectors)
     m = len(measurement_series)
     for measure in sorted(chosen_basis_measure_coords, key=lambda c: (c.real, c.imag)):
         
@@ -310,7 +309,7 @@ def generate_rotated_subsystem_surface_code(params: CircuitGenParameters, codepa
                 [measure.real, measure.imag, 0.0]
             )
     
-    # Then need to add a cycle 
+    # Add a cycle 
     head += bulk_cycle_actions
     
     # Add remaining first experiment basis detectors 
@@ -392,12 +391,10 @@ def generate_rotated_subsystem_surface_code(params: CircuitGenParameters, codepa
         if step == 0:
             params.append_unitary_2(tail, "CNOT", targets)
             params.append_measure_reset(tail, [p2q[i] for i in codeparams.measure_at_round_coords[step]], basis='X')
-            # end_measurement_series += [p2q[i] for i in codeparams.measure_at_round_coords[step]]
             
         elif step in [1,2]: 
             params.append_unitary_2(tail, "CNOT", targets)
             params.append_measure_reset(tail, [p2q[i] for i in codeparams.measure_at_round_coords[step]])
-            # end_measurement_series += [p2q[i] for i in codeparams.measure_at_round_coords[step]]
             
         else:
             params.append_measure_reset(tail, [p2q[i] for i in codeparams.measure_at_round_coords[step]], basis='X')
@@ -421,7 +418,7 @@ def generate_rotated_subsystem_surface_code(params: CircuitGenParameters, codepa
                     [stim.target_rec(-k - 1), stim.target_rec(-k - 1 - m)],
                     [m_coord.real, m_coord.imag, 0.0])
             
-        # Add gauge detectors (boundary) first : both X and Z 
+        # Add gauge detectors 
         else:
             triangle = codeparams.TriangleDict[m_coord]
             if not params.exclude_other_basis_detectors or m_coord in chosen_basis_measure_coords:
@@ -489,10 +486,3 @@ def generate_rotated_subsystem_surface_code(params: CircuitGenParameters, codepa
     tail.append_operation("OBSERVABLE_INCLUDE", [stim.target_rec(x) for x in obs_inc], 0.0)
 
     return head + body * (params.rounds - 1) + tail
-    
-# circuit = generate_rotated_subsystem_surface_code(CircuitGenParameters(distance=3, rounds=5, show_qubit_coordinates=False), SubsystemSurfaceCode(distance=3), experiment_basis='X')
-
-# print(repr(circuit))
-# sampler = circuit.compile_sampler()
-# arr = sampler.sample(shots=1)
-# print(repr(circuit.detector_error_model(allow_gauge_detectors=False)))

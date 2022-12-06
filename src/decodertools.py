@@ -5,9 +5,11 @@ import sinter
 import pymatching 
 from typing import Callable, Set, List, Dict, Tuple, Optional
 from scipy.optimize import curve_fit
+import matplotlib.pyplot as plt
+from matplotlib.pyplot import cm 
 
-from CircuitGeneratorParams import *
-from generate_circuit import *
+from .CircuitGeneratorParams import *
+from .generate_circuit import *
 
 def count_logical_errors(circuit: stim.Circuit, num_shots: int) -> int:
     """Method to sample from a given stim circuit, build its detector graph
@@ -101,4 +103,29 @@ def get_fit_data(d, p_list, params):
     p_th, nu, A, B, C = params
     return [A*((p - p_th)*d**nu)**2 + B*((p - p_th)*d**nu) + C for p in p_list]
 
-        
+    
+# Plotting tools
+
+def plot_threshold(df, log=False):
+    
+    color = cm.rainbow(np.linspace(0, 1, len(np.unique(df['d']))))
+
+    sizes = np.unique(df['d'])
+    xdata = df[['d', 'p_pauli']].T.values
+    ydata = df[['ler']].values.flatten()
+    fit_data = get_fit_params(xdata, ydata, params_0=[1,1,1,1,1])
+
+    for d, c in zip(sizes, color):
+
+        dfd = df.loc[df['d'] == d]
+        plt.plot(dfd['p_pauli'], dfd['ler'],'.', c=c, label=f'd = {d}')
+        plt.plot(dfd['p_pauli'], get_fit_data(d, dfd['p_pauli'], fit_data), '--', c=c)
+    if log == True:
+        plt.loglog()
+    plt.axvline(x=fit_data[0], linewidth=1, color='k', label=f'Th. fit :{round(fit_data[0]*100, 2)} %')
+    plt.grid(color='gray', linestyle='dashed')
+    plt.xlabel('per')
+    plt.ylabel('ler')
+    # plt.title(r'Logical error rate ')
+    plt.savefig('data/noisy_all_p_subsystem_surface_code.png')
+    plt.legend()
